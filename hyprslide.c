@@ -1,13 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <dirent.h>
+#include <time.h>
 #include <string.h>
 #include <unistd.h>
-#include <dirent.h>
-
-#include <signal.h>
-
-#define DR42_TRACE_IMPLEMENTATION
-#include "trace.h"
 
 typedef struct image_info_t{
 	char** paths;
@@ -59,16 +55,9 @@ void free_images(image_info_t images){
 	free(images.paths);
 }
 
-void sig_handler(int signo){
-	(void)signo;
-	print_trace();
-	exit(1);
-}
-
 int main(int argc, char **argv){
-	signal(SIGSEGV, sig_handler);
 	// Defaults
-	int time = 60;
+	int deftime = 60;
 	int random = 0;
 	char* dir;
 	char* monitor;
@@ -88,8 +77,8 @@ int main(int argc, char **argv){
 		}
 		else if(strcmp(argv[i], "-t") == 0){
 			i++;
-			time = atoi(argv[i]);
-			printf("Time: %d\n", time);
+			deftime = atoi(argv[i]);
+			printf("Time: %d\n", deftime);
 		}
 		else if(strcmp(argv[i], "-r") == 0){
 			random = 1;
@@ -167,6 +156,12 @@ int main(int argc, char **argv){
 	} else {
 		system("hyprpaper &");
 	}
+
+	// Wait for hyprpaper to start
+	while(system("pidof -x hyprpaper > /dev/null") != 0){
+		usleep(50000);
+	}
+	srand(time(NULL));
 	while(1){
 		if(random){
 			index = rand() % image_info.count;
@@ -178,7 +173,7 @@ int main(int argc, char **argv){
 		char command[256];
 		sprintf(command, "hyprctl hyprpaper wallpaper %s,%s/%s", monitor, dir, image_info.paths[index]);
 		system(command);
-		sleep(time);
+		sleep(deftime);
 	}
 	free_images(image_info);
 	return 0;
