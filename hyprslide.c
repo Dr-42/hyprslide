@@ -4,6 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 typedef struct image_info_t{
 	char** paths;
@@ -56,6 +57,7 @@ void free_images(image_info_t images){
 }
 
 int main(int argc, char **argv){
+	srand(time(NULL));
 	// Defaults
 	int deftime = 60;
 	int random = 0;
@@ -143,25 +145,40 @@ int main(int argc, char **argv){
 		printf("Adding %s to config file\n", image_info.paths[i]);
 		fprintf(fp, "preload = %s/%s\n", dir, image_info.paths[i]);
 	}
+	if (random){
+		fprintf(fp, "wallpaper = %s,%s/%s\n", monitor, dir, image_info.paths[rand() % image_info.count]);
+	} else {
+		fprintf(fp, "wallpaper = %s,%s\n", monitor, image_info.paths[0]);
+	}
 	fclose(fp);
 	free(old);
 	free(new);
 
 	int index = 0;
 
-	// Check if hyprpaper is running
-	if(system("pidof -x hyprpaper > /dev/null") == 0){
-		system("pkill hyprpaper");
-		system("hyprpaper &");
-	} else {
-		system("hyprpaper &");
+	char line[1024];
+	FILE *cmd = popen("pidof hyprpaper", "r");
+
+	fgets(line, 1024, cmd);
+	pid_t pid_old = strtoul(line, NULL, 10);
+
+	pclose(cmd);
+
+	if(pid_old != 0){
+		printf("Killing old hyprpaper instance\n");
+		kill(pid_old, SIGTERM);
 	}
 
-	// Wait for hyprpaper to start
-	while(system("pidof -x hyprpaper > /dev/null") != 0){
-		usleep(50000);
+	int pid = fork();
+
+	if(pid == 0){
+		execlp("hyprpaper", "hyprpaper", NULL);
 	}
-	srand(time(NULL));
+	else if(pid < 0){
+		printf("Error starting hyprpaper\n");
+		return 1;
+	}
+
 	while(1){
 		if(random){
 			index = rand() % image_info.count;
