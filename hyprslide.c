@@ -56,25 +56,30 @@ void free_images(image_info_t images){
 	free(images.paths);
 }
 
+void print_help(){
+	printf("hyprslide - A simple wallpaper slideshow program for hyprland and hyprpaper\n");
+	printf("Usage: hyprslide [options]\n");
+	printf("Options:\n");
+	printf("\t-h\t\tShow this help message\n");
+	printf("\t-t [time]\tSet time between slides (in seconds)\n");
+	printf("\t\t\tDefault: 60\n");
+	printf("\t-r\t\tRandomize slide order\n");
+	printf("\t-p <path>\tSet path to images\n");
+	printf("\t-m <monitor>\tSet monitor to display slides on\n");
+}
+
 int main(int argc, char **argv){
 	srand(time(NULL));
 	// Defaults
 	int deftime = 60;
 	int random = 0;
-	char* dir;
-	char* monitor;
+	char* dir = NULL;
+	char* monitor = NULL;
 
 	// Parse arguments
 	for(int i = 1; i < argc; i++){
 		if(strcmp(argv[i], "-h") == 0){
-			printf("hyprslide - A simple wallpaper slideshow program for hyprland and hyprpaper\n");
-			printf("Usage: hyprslide [options]\n");
-			printf("Options:\n");
-			printf("\t-h\t\tShow this help message\n");
-			printf("\t-t <time>\tSet time between slides (in seconds)\n");
-			printf("\t-r\t\tRandomize slide order\n");
-			printf("\t-p <path>\tSet path to images\n");
-			printf("\t-m <monitor>\tSet monitor to display slides on\n");
+			print_help();
 			return 0;
 		}
 		else if(strcmp(argv[i], "-t") == 0){
@@ -104,6 +109,18 @@ int main(int argc, char **argv){
 			printf("Invalid argument: %s\n", argv[1]);
 			return 1;
 		}
+	}
+
+	if(dir == NULL){
+		printf("No path specified\n");
+		print_help();
+		return 1;
+	}
+
+	if(monitor == NULL){
+		printf("No monitor specified\n");
+		print_help();
+		return 1;
 	}
 
 
